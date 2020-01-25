@@ -1,0 +1,3 @@
+#!/bin/bash
+
+gcc main.cpp -o cpp-class-browser -O0 -g -lclang
