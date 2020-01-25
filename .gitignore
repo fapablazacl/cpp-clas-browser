@@ -1,4 +1,2 @@
-
-.build/*
-boost/*
+.cmake/*
 .vscode/*
