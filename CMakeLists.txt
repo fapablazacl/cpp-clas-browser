@@ -2,37 +2,8 @@ cmake_minimum_required(VERSION 3.16)
 
 project(cpp-class-browser)
 
-find_package(LLVM REQUIRED)
-find_package(Clang REQUIRED)
-
-find_package(PkgConfig)
-pkg_check_modules (GTKMM gtkmm-3.0 gtksourceviewmm-3.0 gdlmm-3.0)
-
-link_directories (
-    ${GTKMM_LIBRARY_DIRS}
-    ${LLVM_LIBRARY_DIRS}
-    ${CLANG_LIBRARY_DIRS}
-)
-
-include_directories (
-    ${LLVM_INCLUDE_DIRS}
-    ${CLANG_INCLUDE_DIRS}
-    ${GTKMM_INCLUDE_DIRS}
-)
-
-add_definitions(${LLVM_CFLAGS})
-
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set (target cpp-class-browser)
-
-add_executable(${target} main.cpp)
-
-target_link_libraries(${target} 
-    clang
-    # ${GTKMM_LIBRARIES}
-    ${CLANG_LIBS}  # ---> this doesn't work
-    ${LLVM_LIBNAMES}
-)
+add_subdirectory("./src")
