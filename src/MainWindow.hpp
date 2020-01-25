@@ -5,6 +5,8 @@
 #include <gtkmm.h>
 
 namespace ccb {
+    struct Person;
+
     class MainWindow : public Gtk::Window {
     public:
         MainWindow();
@@ -16,7 +18,7 @@ namespace ccb {
 
         void on_treeview_row_activated(const Gtk::TreeModel::Path &path, Gtk::TreeViewColumn *column);
 
-    private:
+    public:
         class ModelColumns : public Gtk::TreeModel::ColumnRecord {
         public:
             ModelColumns() {
@@ -28,6 +30,11 @@ namespace ccb {
             Gtk::TreeModelColumn<Glib::ustring> m_col_name;
         };
 
+    private:
+        Gtk::TreeModel::Row createTreeRow(Gtk::TreeModel::Row &parent, const Person &person);
+
+        Glib::RefPtr<Gtk::TreeStore> createTreeModel(const std::vector<Person> &persons);
+   
     private:
         ModelColumns m_Columns;
 

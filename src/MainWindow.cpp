@@ -2,8 +2,79 @@
 #include "MainWindow.hpp"
 
 #include <iostream>
+#include <vector>
 
 namespace ccb {
+    struct Person {
+        int id;
+        std::string name;
+        std::vector<Person> children;
+    };
+
+
+    std::vector<Person> getPersons() {
+        return {
+            Person {
+                1, "Billy Bob", {
+                    Person{11, "Billy Bob Junior"}, 
+                    Person{12, "Sue Bob"}, 
+                }
+
+            }, 
+            Person {
+                2, "Joey Jojo"
+            }, 
+            Person {
+                3, "Rob McRoberts", {
+                    Person{31, "Xavier McRoberts"}
+                }
+            }
+        };
+    }
+
+    void fillTreeModelRow(Gtk::TreeModel::Row &row, MainWindow::ModelColumns &columns, const Person &person) {
+        row[columns.m_col_id] = person.id;
+        row[columns.m_col_name] = person.name;
+    }
+
+
+    Gtk::TreeModel::Row MainWindow::createTreeRow(Gtk::TreeModel::Row &parent, const Person &person) {
+        return {};
+    }
+
+
+    Glib::RefPtr<Gtk::TreeStore> MainWindow::createTreeModel(const std::vector<Person> &persons) {
+        Glib::RefPtr<Gtk::TreeStore> refTreeModel = Gtk::TreeStore::create(m_Columns);
+
+        // setup treeview model
+        Gtk::TreeModel::Row row = *(refTreeModel->append());
+        row[m_Columns.m_col_id] = 1;
+        row[m_Columns.m_col_name] = "Billy Bob";
+
+        Gtk::TreeModel::Row childrow = *(refTreeModel->append(row.children()));
+        childrow[m_Columns.m_col_id] = 11;
+        childrow[m_Columns.m_col_name] = "Billy Bob Junior";
+
+        childrow = *(refTreeModel->append(row.children()));
+        childrow[m_Columns.m_col_id] = 12;
+        childrow[m_Columns.m_col_name] = "Sue Bob";
+
+        row = *(refTreeModel->append());
+        row[m_Columns.m_col_id] = 2;
+        row[m_Columns.m_col_name] = "Joey Jojo";
+
+        row = *(refTreeModel->append());
+        row[m_Columns.m_col_id] = 3;
+        row[m_Columns.m_col_name] = "Rob McRoberts";
+
+        childrow = *(refTreeModel->append(row.children()));
+        childrow[m_Columns.m_col_id] = 31;
+        childrow[m_Columns.m_col_name] = "Xavier McRoberts";
+
+        return refTreeModel;
+    }
+
+
     MainWindow::MainWindow() 
             : m_VBox(Gtk::ORIENTATION_VERTICAL)
             , m_ButtonQuit("Quit") {
@@ -27,34 +98,9 @@ namespace ccb {
 
         m_ButtonQuit.signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::on_button_quit));
 
-          //Create the Tree model:
-        m_refTreeModel = Gtk::TreeStore::create(m_Columns);
+        //Create the Tree model:
+        m_refTreeModel = this->createTreeModel({});
         m_TreeView.set_model(m_refTreeModel);
-
-        // setup treeview model
-        Gtk::TreeModel::Row row = *(m_refTreeModel->append());
-        row[m_Columns.m_col_id] = 1;
-        row[m_Columns.m_col_name] = "Billy Bob";
-
-        Gtk::TreeModel::Row childrow = *(m_refTreeModel->append(row.children()));
-        childrow[m_Columns.m_col_id] = 11;
-        childrow[m_Columns.m_col_name] = "Billy Bob Junior";
-
-        childrow = *(m_refTreeModel->append(row.children()));
-        childrow[m_Columns.m_col_id] = 12;
-        childrow[m_Columns.m_col_name] = "Sue Bob";
-
-        row = *(m_refTreeModel->append());
-        row[m_Columns.m_col_id] = 2;
-        row[m_Columns.m_col_name] = "Joey Jojo";
-
-        row = *(m_refTreeModel->append());
-        row[m_Columns.m_col_id] = 3;
-        row[m_Columns.m_col_name] = "Rob McRoberts";
-
-        childrow = *(m_refTreeModel->append(row.children()));
-        childrow[m_Columns.m_col_id] = 31;
-        childrow[m_Columns.m_col_name] = "Xavier McRoberts";
 
         //Add the TreeView's view columns:
         m_TreeView.append_column("ID", m_Columns.m_col_id);
