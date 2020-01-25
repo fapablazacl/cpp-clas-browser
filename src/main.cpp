@@ -1,16 +1,16 @@
-/*
-#include <gtkmm.h>
+
+#include "MainWindow.hpp"
 
 int main(int argc, char *argv[]) {
     auto app = Gtk::Application::create(argc, argv, "org.gtkmm.examples.base");
 
-    Gtk::Window window;
-    window.set_default_size(200, 200);
+    ccb::MainWindow window;
 
     return app->run(window);
 }
-*/
 
+
+/*
 #include <clang-c/Index.h>
 #include <iostream>
 #include <string>
@@ -52,19 +52,20 @@ int main(int argc, char *argv[]) {
         return CXChildVisit_Continue;
     }, nullptr);
 
-    /*
-    for (unsigned i=0; i<clang_getNumDiagnostics(unit); i++) {
-        CXDiagnostic diagnostic = clang_getDiagnostic(unit, i);
-        CXString string = clang_formatDiagnostic(diagnostic, clang_defaultDiagnosticDisplayOptions());
-
-        std::fprintf(stderr, "%s\n", clang_getCString(string));
-
-        clang_disposeString(string);
-    }
-    */
+    // 
+    // for (unsigned i=0; i<clang_getNumDiagnostics(unit); i++) {
+    //     CXDiagnostic diagnostic = clang_getDiagnostic(unit, i);
+    //     CXString string = clang_formatDiagnostic(diagnostic, clang_defaultDiagnosticDisplayOptions());
+    // 
+    //     std::fprintf(stderr, "%s\n", clang_getCString(string));
+    // 
+    //     clang_disposeString(string);
+    // }
+    //
 
     clang_disposeTranslationUnit(unit);
     clang_disposeIndex(index);
 
     return 0;
 }
+*/
