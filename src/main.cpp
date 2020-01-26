@@ -1,7 +1,11 @@
 
 #include "MainWindow.hpp"
+#include <clang-c/Index.h>
 
 int main(int argc, char *argv[]) {
+    CXIndex index = clang_createIndex(0, 0);
+    clang_disposeIndex(index);
+    
     auto app = Gtk::Application::create(argc, argv, "org.gtkmm.examples.base");
 
     ccb::MainWindow window;
@@ -9,9 +13,7 @@ int main(int argc, char *argv[]) {
     return app->run(window);
 }
 
-
 /*
-#include <clang-c/Index.h>
 #include <iostream>
 #include <string>
 #include <vector>

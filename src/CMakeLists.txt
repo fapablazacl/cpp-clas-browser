@@ -33,6 +33,6 @@ add_executable(${target} ${sources})
 
 target_link_libraries(${target} 
     ${GTKMM_LIBRARIES}
-    ${CLANG_LIBS}
     ${LLVM_LIBNAMES}
+    libclang
 )
