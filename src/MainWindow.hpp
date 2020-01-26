@@ -31,9 +31,9 @@ namespace ccb {
         };
 
     private:
-        Gtk::TreeModel::Row createTreeRow(Gtk::TreeModel::Row &parent, const Person &person);
+        void setupTreeModelRow(Gtk::TreeModel::Row &row, const Person &person);
 
-        Glib::RefPtr<Gtk::TreeStore> createTreeModel(const std::vector<Person> &persons);
+        void setupTreeModel(const std::vector<Person> &persons);
    
     private:
         ModelColumns m_Columns;
