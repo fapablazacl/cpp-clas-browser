@@ -5,9 +5,9 @@
 #include <gtkmm.h>
 
 namespace ccb {
-    struct Person;
+    struct CodeElement;
 
-    class MainWindow : public Gtk::Window {
+    class MainWindow : public Gtk::ApplicationWindow {
     public:
         MainWindow();
 
@@ -31,9 +31,11 @@ namespace ccb {
         };
 
     private:
-        void setupTreeModelRow(Gtk::TreeModel::Row &row, const Person &person);
+        void setupTreeModelRow(Gtk::TreeModel::Row &row, const CodeElement &person);
 
-        void setupTreeModel(const std::vector<Person> &persons);
+        void setupTreeModel(const std::vector<CodeElement> &elements);
+
+        void on_file_open();
    
     private:
         ModelColumns m_Columns;

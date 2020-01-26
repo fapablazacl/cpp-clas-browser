@@ -24,7 +24,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set (target cpp-class-browser)
 set (sources 
-    main.cpp
+    Main.cpp
     MainWindow.hpp
     MainWindow.cpp
 )
