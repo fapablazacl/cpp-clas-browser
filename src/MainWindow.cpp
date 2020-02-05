@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <algorithm>
 #include <clang-c/Index.h>
 
 
@@ -16,6 +17,46 @@ namespace ccb {
         std::string name;
         std::vector<CodeElement> children;
     };
+
+
+    static const std::map<int, const char*> cursorKindMap = {
+        { CXCursor_Namespace, "namespace" },
+        { CXCursor_ClassDecl, "class" }
+    };
+
+
+    std::string convertKindToString(const int kind) {
+        if (auto it = cursorKindMap.find(kind); it != cursorKindMap.end()) {
+            return it->second;
+        }
+
+        return std::to_string(kind);
+    }
+
+
+    std::vector<CodeElement> convertCodeElementMapToArray(const CodeElementMap &codeElementMap, const std::vector<CodeElementKey> &codeElementKeys) {
+        std::vector<CodeElement> result;
+
+        std::transform (
+            codeElementKeys.begin(), codeElementKeys.end(), 
+            std::back_inserter(result),
+            [&codeElementMap](const CodeElementKey &key) {
+                CodeElement element;
+
+                element.id = std::get<0>(key);
+                element.name = std::get<1>(key);
+
+                if (auto it = codeElementMap.find(key); it != codeElementMap.end()) {
+                    element.children = convertCodeElementMapToArray(codeElementMap, it->second);
+                }
+
+                return element;
+            }
+        );
+
+        return result;
+    }
+
 
     std::vector<CodeElement> parseCodeElements(const std::string &filePath) {
         const char* argv[] = { "cpp-class-browser", filePath.c_str() };
@@ -31,10 +72,6 @@ namespace ccb {
 
         CXCursor cursor = clang_getTranslationUnitCursor(unit);
 
-        std::cout << "Root cursor: " << (clang_getCString(clang_getCursorSpelling(cursor))) << std::endl;
-        std::cout << " Of Kind: " << (clang_getCString(clang_getCursorKindSpelling(clang_getCursorKind(cursor)))) << std::endl;
-        std::cout << std::endl;
-
         CodeElementMap codeElementMap;
 
         clang_visitChildren(cursor, [](CXCursor c, CXCursor parent, CXClientData clientData) {
@@ -45,10 +82,15 @@ namespace ccb {
                 clang_getCString(clang_getCursorSpelling(c))
             };
 
-            if (auto it = codeElementMap->find(key); it != codeElementMap->end()) {
+            const auto parentKey = CodeElementKey {
+                parent.kind, 
+                clang_getCString(clang_getCursorSpelling(parent))
+            };
 
+            if (auto it = codeElementMap->find(parentKey); it != codeElementMap->end()) {
+                it->second.push_back(key);
             } else {
-
+                codeElementMap->insert({parentKey, {key}});
             }
 
             /*
@@ -80,37 +122,27 @@ namespace ccb {
         //     clang_disposeString(string);
         // }
         
+        const auto rootKey = CodeElementKey {
+            cursor.kind, 
+            clang_getCString(clang_getCursorSpelling(cursor))
+        };
+
+        const auto rootChildrenIt = codeElementMap.find(rootKey);
+
+        std::vector<CodeElement> codeElements = convertCodeElementMapToArray(codeElementMap, rootChildrenIt->second);
+
         clang_disposeTranslationUnit(unit);
         clang_disposeIndex(index);
 
-        return {};
-
-        /*
-        return {
-            CodeElement {
-                1, "Billy Bob", {
-                    CodeElement{11, "Billy Bob Junior"}, 
-                    CodeElement{12, "Sue Bob"}, 
-                }
-            }, 
-            CodeElement {
-                2, "Joey Jojo"
-            }, 
-            CodeElement {
-                3, "Rob McRoberts", {
-                    CodeElement{31, "Xavier McRoberts"}
-                }
-            }
-        };
-        */
+        return codeElements;
     }
 
 
-    void MainWindow::setupTreeModelRow(Gtk::TreeModel::Row &row, const CodeElement &person) {
-        row[m_Columns.m_col_id] = person.id;
-        row[m_Columns.m_col_name] = person.name;
+    void MainWindow::setupTreeModelRow(Gtk::TreeModel::Row &row, const CodeElement &codeElement) {
+        row[m_Columns.m_col_id] = convertKindToString(codeElement.id);
+        row[m_Columns.m_col_name] = codeElement.name;
 
-        for (const CodeElement &childPerson : person.children) {
+        for (const CodeElement &childPerson : codeElement.children) {
             auto childRow = *(m_refTreeModel->append(row.children()));
 
             this->setupTreeModelRow(childRow, childPerson);
@@ -163,7 +195,7 @@ namespace ccb {
 
         show_all_children();
 
-        // remove later
+        // TODO: remove later
         this->setupTreeModel(parseCodeElements("/home/fapablaza/Desktop/devwarecl/cpp-class-browser/share/source-to-parse.cpp"));
     }
 

@@ -26,7 +26,7 @@ namespace ccb {
                 add(m_col_name);
             }
 
-            Gtk::TreeModelColumn<int> m_col_id;
+            Gtk::TreeModelColumn<Glib::ustring> m_col_id;
             Gtk::TreeModelColumn<Glib::ustring> m_col_name;
         };
 
