@@ -9,8 +9,8 @@
 
 
 namespace ccb {
-    typedef std::tuple<int, std::string> CodeElementKey;
-    typedef std::map<CodeElementKey, std::vector<CodeElementKey>> CodeElementMap;
+    typedef std::tuple<int, std::string> CursorKey;
+    typedef std::map<CursorKey, std::vector<CursorKey>> CursorMap;
 
     struct CodeElement {
         int id;
@@ -21,7 +21,8 @@ namespace ccb {
 
     static const std::map<int, const char*> cursorKindMap = {
         { CXCursor_Namespace, "namespace" },
-        { CXCursor_ClassDecl, "class" }
+        { CXCursor_ClassDecl, "class" },
+        { CXIdxEntity_CXXInstanceMethod, "method" },
     };
 
 
@@ -34,20 +35,20 @@ namespace ccb {
     }
 
 
-    std::vector<CodeElement> convertCodeElementMapToArray(const CodeElementMap &codeElementMap, const std::vector<CodeElementKey> &codeElementKeys) {
+    std::vector<CodeElement> convertCodeElementMapToArray(const CursorMap &cursorMap, const std::vector<CursorKey> &cursorKeys) {
         std::vector<CodeElement> result;
 
         std::transform (
-            codeElementKeys.begin(), codeElementKeys.end(), 
+            cursorKeys.begin(), cursorKeys.end(), 
             std::back_inserter(result),
-            [&codeElementMap](const CodeElementKey &key) {
+            [&cursorMap](const CursorKey &key) {
                 CodeElement element;
 
                 element.id = std::get<0>(key);
                 element.name = std::get<1>(key);
 
-                if (auto it = codeElementMap.find(key); it != codeElementMap.end()) {
-                    element.children = convertCodeElementMapToArray(codeElementMap, it->second);
+                if (auto it = cursorMap.find(key); it != cursorMap.end()) {
+                    element.children = convertCodeElementMapToArray(cursorMap, it->second);
                 }
 
                 return element;
@@ -72,25 +73,29 @@ namespace ccb {
 
         CXCursor cursor = clang_getTranslationUnitCursor(unit);
 
-        CodeElementMap codeElementMap;
+        CursorMap cursorMap;
 
         clang_visitChildren(cursor, [](CXCursor c, CXCursor parent, CXClientData clientData) {
-            auto codeElementMap = reinterpret_cast<CodeElementMap*>(clientData);
+            if (c.kind == CXCursor_CXXAccessSpecifier) {
+                return CXChildVisit_Continue;
+            }
 
-            const auto key = CodeElementKey{
+            auto cursorMap = reinterpret_cast<CursorMap*>(clientData);
+
+            const auto key = CursorKey {
                 c.kind, 
                 clang_getCString(clang_getCursorSpelling(c))
             };
 
-            const auto parentKey = CodeElementKey {
+            const auto parentKey = CursorKey {
                 parent.kind, 
                 clang_getCString(clang_getCursorSpelling(parent))
             };
 
-            if (auto it = codeElementMap->find(parentKey); it != codeElementMap->end()) {
+            if (auto it = cursorMap->find(parentKey); it != cursorMap->end()) {
                 it->second.push_back(key);
             } else {
-                codeElementMap->insert({parentKey, {key}});
+                cursorMap->insert({parentKey, {key}});
             }
 
             /*
@@ -110,9 +115,8 @@ namespace ccb {
             // return CXChildVisit_Continue;
 
             return CXChildVisit_Recurse;
-        }, &codeElementMap);
+        }, &cursorMap);
 
-        
         // for (unsigned i=0; i<clang_getNumDiagnostics(unit); i++) {
         //     CXDiagnostic diagnostic = clang_getDiagnostic(unit, i);
         //     CXString string = clang_formatDiagnostic(diagnostic, clang_defaultDiagnosticDisplayOptions());
@@ -122,14 +126,14 @@ namespace ccb {
         //     clang_disposeString(string);
         // }
         
-        const auto rootKey = CodeElementKey {
+        const auto rootKey = CursorKey {
             cursor.kind, 
             clang_getCString(clang_getCursorSpelling(cursor))
         };
 
-        const auto rootChildrenIt = codeElementMap.find(rootKey);
+        const auto rootChildrenIt = cursorMap.find(rootKey);
 
-        std::vector<CodeElement> codeElements = convertCodeElementMapToArray(codeElementMap, rootChildrenIt->second);
+        std::vector<CodeElement> codeElements = convertCodeElementMapToArray(cursorMap, rootChildrenIt->second);
 
         clang_disposeTranslationUnit(unit);
         clang_disposeIndex(index);
